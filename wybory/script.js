@@ -5,7 +5,6 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxcLeg8gbl2XSYfcC1L
 // ────────────────────────────────────────────────
 // SYSTEM ADMINA PRZEZ KONSOLĘ (Hasło z A2)
 // ────────────────────────────────────────────────
-// Aby użyć: F12 -> Konsola -> await admin("hasło_z_arkusza")
 window.admin = async function(input) {
     console.log("%c[System] Pobieranie hasła z bazy...", "color: gray;");
     const passwordFromSheet = await getCell("A2", "Arkusz1");
@@ -40,7 +39,6 @@ window.admin = async function(input) {
     
     return "Status zmieniony.";
 };
-
 // ────────────────────────────────────────────────
 // KOMUNIKACJA Z ARKUSZEM
 // ────────────────────────────────────────────────
@@ -79,16 +77,17 @@ function cellToCol(cell) {
   for (let i = 0; i < col.length; i++) { num = num * 26 + (col.charCodeAt(i) - 64); }
   return num;
 }
-
 // ────────────────────────────────────────────────
 // KONFIG KANDYDATÓW
 // ────────────────────────────────────────────────
 const candidates = {
-  A: { name: "Partia Razem", color: "#BDECB6" },
-  B: { name: "Nowa Lewica", color: "#FDF4E3" },
-  C: { name: "Koalicja Obywatelska", color: "#781F19" },
-  D: { name: "Ruch Dobrobytu i Pokoju", color: "#6C7059" },
-  E: { name: "Konfederacja Korony Polskiej", color: "#CB3234" }
+  A: { name: "Mateusz Morawiecki", color: "#155ed4" },
+  B: { name: "Tobiasz Bocheński", color: "#d1a70f" },
+  C: { name: "Zbigniew Bogucki", color: "#b31b20" },
+  D: { name: "Przemysław Czarnek", color: "#1f1f1f" },
+  E: { name: "Jarosław Margielski", color: "#7a8dbf" },
+  F: { name: "Anna Krupka", color: "#579e71" },
+  G: { name: "Lucjusz Nadbereżny", color: "#cad620" }
 };
 
 // Generowanie przycisków
@@ -202,11 +201,100 @@ window.toggleChart = function(typ) {
 };
 
 async function odswiezKoloryWojewodztw() {
-    // Logika kolorowania mapy (overlay) pozostaje bez zmian
-    console.log("Mapa zaktualizowana.");
-}
+  console.log("START: odswiezKoloryWojewodztw – mocne zalewanie");
 
+  const wojStats = {};
+  const CHUNK = 50;
+  let r = 2;
+  let maDane = true;
+
+  while (maDane) {
+    const promises = [];
+    for (let i = 0; i < CHUNK; i++) {
+      promises.push(Promise.all([
+        getCell(`E${r + i}`, "Arkusz1"),
+        getCell(`F${r + i}`, "Arkusz1")
+      ]));
+    }
+    const wyniki = await Promise.all(promises);
+    maDane = false;
+
+    for (const [wojRaw, kand] of wyniki) {
+      const woj = (wojRaw || "").trim();
+      if (!kand || !woj) continue;
+      maDane = true;
+
+      const wojKey = woj.toLowerCase();
+      if (!wojStats[wojKey]) wojStats[wojKey] = { total: 0, votes: {} };
+      wojStats[wojKey].total++;
+      wojStats[wojKey].votes[kand] = (wojStats[wojKey].votes[kand] || 0) + 1;
+    }
+    r += CHUNK;
+    if (r > 5000) break;
+  }
+
+  console.log("=== WOJEWÓDZTWA Z GŁOSAMI ===");
+  console.log(Object.keys(wojStats));
+  console.log("małopolskie:", wojStats["małopolskie"]);
+  console.log("mazowieckie:", wojStats["mazowieckie"]);
+  console.log("dolnośląskie:", wojStats["dolnośląskie"]);
+
+  const wszystkieKontenery = document.querySelectorAll('.woj-img-container');
+
+  wszystkieKontenery.forEach(container => {
+    const img = container.querySelector('.woj-img');
+    const overlay = container.querySelector('.woj-overlay');
+    const tooltip = container.querySelector('.tooltip');
+
+    const src = img.getAttribute("src");
+
+    overlay.style.webkitMaskImage = `url(${src})`;
+    overlay.style.maskImage = `url(${src})`;
+    overlay.style.width = img.offsetWidth + "px";
+    overlay.style.height = img.offsetHeight + "px";
+    overlay.style.top = img.offsetTop + "px";
+    overlay.style.left = img.offsetLeft + "px";
+    if (!img || !overlay) return;
+
+    const wojName = img.getAttribute('data-woj');
+    if (!wojName) return;
+
+    const wojKey = wojName.toLowerCase();
+    const stats = wojStats[wojKey] || { total: 0, votes: {} };
+
+    let kolor = '#cccccc';
+    let dominujacy = null;
+    let procent = 0;
+
+    if (stats.total > 0) {
+      let maxVotes = 0;
+
+      Object.keys(stats.votes).forEach(kod => {
+        if (stats.votes[kod] > maxVotes) {
+          maxVotes = stats.votes[kod];
+          dominujacy = kod;
+        }
+      });
+
+      procent = (maxVotes / stats.total) * 100;
+
+      if (dominujacy && candidates[dominujacy]) {
+        kolor = candidates[dominujacy].color;
+        console.log(`Zalewam ${wojName} kolorem ${candidates[dominujacy].name} (${procent.toFixed(1)}%)`);
+      }
+    }
+
+    // Zalewanie – opacity zależna od procentu
+    overlay.style.backgroundColor = kolor;
+    container.style.setProperty('--woj-kolor', kolor);
+    overlay.style.opacity = 0.4 + (procent / 100) * 0.5; // 40% → 90% opacity
+    tooltip.textContent = `${wojName} ${candidates[dominujacy]?.name || 'brak'} (${procent.toFixed(1)}%) Głosy: ${stats.total}`.trim();
+  });
+
+  console.log("Kolory zaktualizowane");
+}
+// Dodaj wywołanie przy starcie i po głosie
 window.addEventListener('load', () => {
   odswiezWykresy();
-odswiezKoloryWojewodztw();
+  odswiezKoloryWojewodztw();
 });
