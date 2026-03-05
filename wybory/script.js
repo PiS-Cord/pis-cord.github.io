@@ -43,10 +43,16 @@ function getCookie(name) {
     }
 
     // Zweryfikowany – pokazujemy komunikat i ukryjemy przycisk Discord
-    document.getElementById("loginBtn")?.style.display = "none";
-    document.getElementById("status")?.innerHTML = 
-      '<div class="already">Jesteś zweryfikowany ✓</div>' +
-      '<small>Możesz oddać głos.</small>';
+    const loginBtn = document.getElementById("loginBtn");
+    if (loginBtn) {
+      loginBtn.style.display = "none";
+    }
+    const statusEl = document.getElementById("status");
+    if (statusEl) {
+      statusEl.innerHTML = 
+        '<div class="already">Jesteś zweryfikowany ✓</div>' +
+        '<small>Możesz oddać głos.</small>';
+    }
 
   } catch (err) {
     console.error("Błąd weryfikacji:", err);
