@@ -138,7 +138,36 @@ async function vote(candidate) {
     console.error(err);
   }
 }
+function sprawdzGodzine() {
+    const teraz = new Date();
 
+    // godzina od której ma się pokazać
+    const godzinaStart = 20; 
+    const minutaStart = 45;
+
+    if (teraz.getHours() > godzinaStart || 
+       (teraz.getHours() === godzinaStart && teraz.getMinutes() >= minutaStart)) {
+
+        const sections = ["wykresy", "mapWojProste"];
+        const containers = document.querySelectorAll(".woj-img-container");
+
+        sections.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove("ukryte");
+                el.classList.add("pokaz");
+            }
+        });
+
+        containers.forEach(c => {
+            c.classList.remove("ukryte");
+            c.classList.add("pokaz");
+        });
+
+        odswiezWykresy();
+        odswiezKoloryWojewodztw();
+    }
+}
 // ────────────────────────────────────────────────
 // SYSTEM ADMINA PRZEZ KONSOLĘ (Hasło z A2)
 // ────────────────────────────────────────────────
@@ -317,4 +346,6 @@ async function odswiezKoloryWojewodztw() {
 window.addEventListener('load', () => {
   odswiezWykresy();
   odswiezKoloryWojewodztw();
+  setInterval(sprawdzGodzine, 60000); // sprawdza co minutę
 });
+window.addEventListener("load", sprawdzGodzine);
