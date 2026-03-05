@@ -107,7 +107,12 @@ document.addEventListener("DOMContentLoaded", () => {
 // ── Główna logika po załadowaniu ───────────────────
 window.addEventListener("load", async () => {
   const status = document.getElementById("status");
-
+  window.addEventListener("load", async () => {
+    if (window.verificationChecked) return;
+    window.verificationChecked = true;
+  
+    // reszta logiki – sprawdzenie code, fetch token, zapis do arkusza, cookie...
+  });
   // Jeśli już zweryfikowany – pokazujemy komunikat i koniec
   if (isAlreadyVerified()) {
     const loginBtn = document.getElementById("loginBtn");
