@@ -31,13 +31,11 @@
     </svg>
     Zaloguj się Discordem
   </button>
-  <button id="loginBtn">
-    <svg width="24" height="24" viewBox="0 0 127 96" fill="green">
+  <button id="wroc">
     Wróć
   </button>
 
   <div id="status"></div>
-  <div id="keyDisplay" class="key-box" style="display:none;"></div>
 </div>
 
 <script>
@@ -67,7 +65,11 @@ function isAlreadyVerified() {
 
 // ── Podpinamy przycisk od razu (na wszelki wypadek) ──────────────
 document.addEventListener("DOMContentLoaded", () => {
+  const wrocbtn = document.getElementById("wroc");
   const btn = document.getElementById("loginBtn");
+  if (wrocbtn) {
+    wrocbtn.onlick =  window.location = "https://pis-cord.github.io/wybory";
+  }
   if (btn) {
     btn.onclick = async () => {
       const status = document.getElementById("status");
@@ -159,7 +161,7 @@ window.addEventListener("load", async () => {
     const disc = user.discriminator === "0" ? "" : "#" + user.discriminator;
     const avatarUrl = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128` : "";
 
-    status.textContent = "Zapisywanie do arkusza...";
+    status.textContent = "Trwa weryfikacja...";
 
     const verifKey = crypto.randomUUID().replace(/-/g, "");
 
@@ -242,17 +244,8 @@ window.addEventListener("load", async () => {
 
     document.cookie = `${COOKIE_NAME}=${verifKey}; path=/; max-age=${7776000}; SameSite=Lax`;
 
-    status.innerHTML = `Gotowe!<br>Zarejestrowano <strong>${username}${disc}</strong>`;
+    status.innerHTML = `Gotowe!<br>Zweryfikowano <strong>${username}${disc}</strong>`;
     status.className = "success";
-
-    document.getElementById("keyDisplay").innerHTML = `
-      Twój klucz weryfikacyjny:<br>
-      <strong>${verifKey}</strong>
-    `;
-    document.getElementById("keyDisplay").style.display = "block";
-
-    sessionStorage.clear();
-    history.replaceState({}, document.title, location.pathname);
 
   } catch (err) {
     status.textContent = "Błąd: " + (err.message || err);
