@@ -112,42 +112,13 @@ async function vote(candidate) {
     return;
   }
 
-  // Pobieramy Discord ID albo z sessionStorage, albo pytamy serwer
-  let discordId = sessionStorage.getItem("verifiedDiscordId");
-
-  if (!discordId) {
-    try {
-      const res = await fetch(WEB_APP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          action: "getDiscordIdByKey",
-          key: key
-        })
-      });
-
-      const data = await res.json();
-
-      if (data.success && data.discordId) {
-        discordId = data.discordId;
-        sessionStorage.setItem("verifiedDiscordId", discordId);
-      } else {
-        alert("Nieprawidłowy klucz weryfikacyjny!");
-        return;
-      }
-    } catch (err) {
-      alert("Błąd połączenia z serwerem.");
-      return;
-    }
-  }
-
   try {
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         action: "submitVote",
-        discordId: discordId,
+        verificationKey: key,          // <-- wysyłamy klucz
         wojewodztwo: woj,
         candidate: candidate
       })
@@ -163,7 +134,7 @@ async function vote(candidate) {
       alert(result.message || "Błąd podczas głosowania!");
     }
   } catch (err) {
-    alert("Błąd połączenia.");
+    alert("Błąd połączenia z serwerem.");
     console.error(err);
   }
 }
