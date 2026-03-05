@@ -39,13 +39,13 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
   // Jeśli wracamy z Discorda → nie blokujemy, czekamy na zapis
   if (code) return;
 
-  const key = getCookie(COOKIE_NAME);
-  const verifiedFlag = sessionStorage.getItem("discVerified");
-
-  if ((!key || key.length < MIN_KEY_LEN) && !verifiedFlag) {
-      window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
-      return;
-  }
+    const key = getCookie(COOKIE_NAME);
+    const verifiedFlag = sessionStorage.getItem("discVerified");
+    
+    if ((!key || key.length < MIN_KEY_LEN) && !verifiedFlag) {
+        window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
+        return;
+    }
 
   try {
     const res = await fetch(WEB_APP_URL, {
