@@ -255,15 +255,15 @@ window.addEventListener("load", async () => {
   // Dodaj na końcu istniejącego skryptu na stronie weryfikacyjnej
 
   // po ustawieniu cookie i pokazaniu sukcesu
-  const returnTo = params.get("return");
-  if (returnTo) {
-    // bezpieczeństwo: tylko ta sama domena
-    if (returnTo.startsWith(window.location.origin)) {
-      window.location.replace(decodeURIComponent(returnTo));
-    }
+  // Po udanej weryfikacji – sprawdź, czy jest parametr return i wróć na poprzednią stronę
+  const returnParams = new URLSearchParams(location.search);
+  const returnUrl = returnParams.get("return");
+  
+  if (returnUrl && returnUrl.startsWith(window.location.origin)) {
+    console.log("Powrót na:", returnUrl);
+    window.location.replace(decodeURIComponent(returnUrl));
   } else {
-    // jeśli nie ma return → możesz przekierować np. na dashboard
-    // window.location.href = "/dashboard.html";
+   window.location.href = "https://pis-cord.github.io/";
   }
 });
   
