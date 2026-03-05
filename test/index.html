@@ -46,7 +46,8 @@
     }
     .loading { color: #ffcc00; }
     .success { color: #43b581; }
-    .error   { color: #f04747; }
+    .banned { color: #ff5555; font-weight: bold; }
+    .already { color: #00cc99; font-size: 1.3rem; margin: 1.5rem 0; }
     .key-box {
       margin-top: 1.8rem;
       padding: 1.2rem;
@@ -63,7 +64,7 @@
 
 <div class="card">
   <h1>Weryfikacja przez Discord</h1>
-  <p>Zaloguj się → dane trafią do arkusza „discord” → otrzymasz losowy klucz weryfikacyjny jako cookie i na ekranie.</p>
+  <p id="introText">Zaloguj się → dane trafią do arkusza „discord” → otrzymasz losowy klucz weryfikacyjny jako cookie i na ekranie.</p>
 
   <button id="loginBtn">
     <svg width="24" height="24" viewBox="0 0 127 96" fill="currentColor">
@@ -78,13 +79,13 @@
 
 <script>
 // ────────────────────────────────────────────────
-// Konfiguracja – zmień tylko WEB_APP_URL !
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxG6G749tAONPZfRFW7_v5ai1Wg2s5rcJxIWtnd8Nn_Bttdvby-nRcp7RfoDwwxRzLWSA/exec";  // ← wklej swój URL Web App !!!
-// ────────────────────────────────────────────────
-
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxG6G749tAONPZfRFW7_v5ai1Wg2s5rcJxIWtnd8Nn_Bttdvby-nRcp7RfoDwwxRzLWSA/exec";
 const CLIENT_ID    = "1478856260526018671";
 const REDIRECT_URI = window.location.origin + window.location.pathname;
-const SCOPE        = "identify";  // dodaj np. " guilds email" jeśli chcesz więcej danych
+const SCOPE        = "identify";
+const COOKIE_NAME  = "disc_verif_key";
+const MIN_KEY_LEN  = 20;
+// ────────────────────────────────────────────────
 
 const authUrl = new URL("https://discord.com/api/oauth2/authorize");
 authUrl.searchParams.set("client_id", CLIENT_ID);
@@ -92,117 +93,97 @@ authUrl.searchParams.set("redirect_uri", REDIRECT_URI);
 authUrl.searchParams.set("response_type", "code");
 authUrl.searchParams.set("scope", SCOPE);
 
-// PKCE helpers
-async function generatePKCE() {
-  const rand = crypto.getRandomValues(new Uint8Array(32));
-  const verifier = btoa(String.fromCharCode(...rand))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
-  const challenge = btoa(String.fromCharCode(...new Uint8Array(hash)))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-  return { verifier, challenge };
+// ── Funkcja sprawdzająca cookie przy starcie ──────────────────────
+function isAlreadyVerified() {
+  const cookies = document.cookie.split('; ');
+  const keyCookie = cookies.find(row => row.startsWith(COOKIE_NAME + '='));
+  if (!keyCookie) return false;
+  const key = keyCookie.split('=')[1];
+  return key && key.length >= MIN_KEY_LEN;
 }
 
-// Losowy klucz weryfikacyjny (32 znaki base64url)
-function generateVerificationKey() {
-  const bytes = crypto.getRandomValues(new Uint8Array(24));
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-}
-
-// Logowanie
-document.getElementById("loginBtn").onclick = async () => {
-  const status = document.getElementById("status");
-  status.textContent = "Generuję PKCE...";
-  status.className = "loading";
-
-  try {
-    const { verifier, challenge } = await generatePKCE();
-    sessionStorage.setItem("pkce_verifier", verifier);
-
-    const state = crypto.randomUUID();
-    sessionStorage.setItem("oauth_state", state);
-
-    authUrl.searchParams.set("state", state);
-    authUrl.searchParams.set("code_challenge", challenge);
-    authUrl.searchParams.set("code_challenge_method", "S256");
-
-    window.location.href = authUrl.toString();
-  } catch (err) {
-    status.textContent = "Błąd: " + err.message;
-    status.className = "error";
+// ── Pokazujemy komunikat o weryfikacji na starcie ─────────────────
+window.addEventListener("load", () => {
+  if (isAlreadyVerified()) {
+    document.getElementById("loginBtn").style.display = "none";
+    document.getElementById("introText").innerHTML = "";
+    document.getElementById("status").innerHTML = 
+      '<div class="already">Jesteś już zweryfikowany ✓</div>' +
+      '<small>Możesz zamknąć tę stronę lub przejść dalej.</small>';
+    document.getElementById("keyDisplay").style.display = "none";
+    return;
   }
-};
 
-// Po powrocie z Discorda
-window.addEventListener("load", async () => {
+  // Jeśli nie zweryfikowany – normalny flow
   const params = new URLSearchParams(location.search);
   const code  = params.get("code");
   const state = params.get("state");
 
   if (!code) return;
 
-  const savedState = sessionStorage.getItem("oauth_state");
-  if (state !== savedState) {
-    document.getElementById("status").textContent = "Błąd: state mismatch";
-    document.getElementById("status").className = "error";
-    return;
-  }
+  // reszta Twojego kodu logowania poniżej...
+  // (wklejam tylko zmienioną część – resztę zostaw bez zmian)
 
-  const verifier = sessionStorage.getItem("pkce_verifier");
-  if (!verifier) return;
+  // ... (twój kod od const savedState = ... aż do końca bloku try)
 
-  const status = document.getElementById("status");
-  status.textContent = "Wymiana kodu na token...";
-
+  // ZMIANA W BLOKU ZAPISU – sprawdzanie bana + log próby
   try {
-    // 1. Wymiana code → token (PKCE – bez client_secret!)
-    const tokenBody = new URLSearchParams({
-      client_id: CLIENT_ID,
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: REDIRECT_URI,
-      code_verifier: verifier
+    // ── Najpierw sprawdzamy, czy użytkownik jest zbanowany ───────
+    const checkBanBody = new URLSearchParams({
+      action: "getAll",
+      sheet: "discord"
     });
 
-    const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: tokenBody
-    });
+    const banCheckRes = await fetch(WEB_APP_URL + "?" + checkBanBody);
+    const banDataText = await banCheckRes.text();
+    let banData = [];
+    try { banData = JSON.parse(banDataText); } catch {}
 
-    if (!tokenRes.ok) throw new Error(await tokenRes.text());
+    let isBanned = false;
+    for (let row of banData) {
+      if (row[1] === user.id && row[7] === "BAN") {  // kolumna H (indeks 7) = status bana
+        isBanned = true;
+        break;
+      }
+    }
 
-    const { access_token } = await tokenRes.json();
-
-    // 2. Dane użytkownika
-    const userRes = await fetch("https://discord.com/api/users/@me", {
-      headers: { Authorization: `Bearer ${access_token}` }
-    });
-
-    if (!userRes.ok) throw new Error("Błąd /users/@me");
-
-    const user = await userRes.json();
-
-    const username    = user.global_name || user.username;
-    const disc        = user.discriminator === "0" ? "" : "#" + user.discriminator;
-    const avatarUrl   = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128` : "";
-
-    status.textContent = "Zapisywanie do arkusza...";
-
-    // 3. Generujemy klucz
-    const verifKey = generateVerificationKey();
-
-    // 4. Zapisujemy wiersz przez istniejącą akcję appendRow
-    const values = JSON.stringify([
+    let valuesArray = [
       new Date().toISOString(),
       user.id,
       username,
       user.global_name || "",
       user.discriminator || "0",
       avatarUrl,
-      verifKey   // klucz weryfikacyjny jako ostatnia kolumna
-    ]);
+      verifKey
+    ];
+
+    if (isBanned) {
+      // ── Logujemy próbę logowania po banie do osobnego arkusza ──
+      const banLogValues = JSON.stringify([
+        new Date().toISOString(),
+        user.id,
+        username,
+        "PRÓBA_LOGOWANIA_PO_BANIE"
+      ]);
+
+      await fetch(WEB_APP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          action: "appendRow",
+          values: banLogValues,
+          sheet: "bany_log"   // ← arkusz musi istnieć!
+        })
+      });
+
+      // Pokazujemy komunikat o banie
+      status.innerHTML = `<span class="banned">Jesteś zbanowany!</span><br>Próba logowania odnotowana.`;
+      status.className = "error";
+      return;
+    }
+
+    // ── Normalny zapis, jeśli nie zbanowany ───────────────────────
+    const values = JSON.stringify(valuesArray);
 
     const resp = await fetch(WEB_APP_URL, {
       method: "POST",
@@ -216,19 +197,18 @@ window.addEventListener("load", async () => {
 
     if (!resp.ok) throw new Error("Błąd appendRow");
 
-    // 5. Ustawiamy cookie
-    document.cookie = `disc_verif_key=${verifKey}; path=/; max-age=${7776000}; SameSite=Lax`; // ~90 dni
+    // Ustawiamy cookie
+    document.cookie = `${COOKIE_NAME}=${verifKey}; path=/; max-age=${7776000}; SameSite=Lax`;
 
     status.innerHTML = `Gotowe!<br>Zarejestrowano <strong>${username}${disc}</strong>`;
     status.className = "success";
 
     document.getElementById("keyDisplay").innerHTML = `
-      Twój klucz weryfikacyjny (cookie + ekran):<br>
+      Twój klucz weryfikacyjny:<br>
       <strong>${verifKey}</strong>
     `;
     document.getElementById("keyDisplay").style.display = "block";
 
-    // Czyszczenie URL i sesji
     sessionStorage.clear();
     history.replaceState({}, document.title, location.pathname);
 
