@@ -210,51 +210,6 @@ h3 {
     pointer-events: none;  /* żeby nie blokował hovera */
     text-align: center;
 }
-.w1 .woj-overlay::before,
-.w2 .woj-overlay::before,
-.w3 .woj-overlay::before,
-.w4 .woj-overlay::before,
-.w5 .woj-overlay::before,
-.w6 .woj-overlay::before,
-.w7 .woj-overlay::before,
-.w8 .woj-overlay::before,
-.w9 .woj-overlay::before,
-.w10 .woj-overlay::before,
-.w11 .woj-overlay::before,
-.w12 .woj-overlay::before,
-.w13 .woj-overlay::before,
-.w14 .woj-overlay::before,
-.w15 .woj-overlay::before,
-.w16 .woj-overlay::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--woj-kolor, white);
-  -webkit-mask: inherit;
-  mask: inherit;
-  filter: blur(10px) drop-shadow(0 0 10px var(--woj-kolor)) drop-shadow(0 0 20px var(--woj-kolor));
-  opacity: 0;
-  transition: opacity 0.4s;
-}
-
-.w1:hover .woj-overlay::before,
-.w2:hover .woj-overlay::before,
-.w3:hover .woj-overlay::before,
-.w4:hover .woj-overlay::before,
-.w5:hover .woj-overlay::before,
-.w6:hover .woj-overlay::before,
-.w7:hover .woj-overlay::before,
-.w8:hover .woj-overlay::before,
-.w9:hover .woj-overlay::before,
-.w10:hover .woj-overlay::before,
-.w11:hover .woj-overlay::before,
-.w12:hover .woj-overlay::before,
-.w13:hover .woj-overlay::before,
-.w14:hover .woj-overlay::before,
-.w15:hover .woj-overlay::before,
-.w16:hover .woj-overlay::before {
-  opacity: 1;
-}
 .w1:hover .c1,
 .w2:hover .c2,
 .w3:hover .c3,
