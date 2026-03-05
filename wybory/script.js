@@ -385,7 +385,7 @@ async function odswiezKoloryWojewodztw() {
     overlay.style.opacity = 0.4 + (procent / 100) * 0.5; // 40% → 90% opacity
 
     // Poprawny tooltip – użyj backticków
-    tooltip.textContent = `${wojName} ${candidates[dominujacy]?.name || 'brak'} (${procent.toFixed(1)}%) Głosy: ${stats.total}`.trim();
+    tooltip.textContent = `${wojName} ${(candidates[dominujacy] ? candidates[dominujacy].name : 'brak')} (${procent.toFixed(1)}%) Głosy: ${stats.total}`.trim();
   });
 
   console.log("Kolory zaktualizowane");
