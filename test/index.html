@@ -102,8 +102,9 @@ function isAlreadyVerified() {
   return key && key.length >= MIN_KEY_LEN;
 }
 
-// ── Główna logika – dodane async tutaj ↓↓↓
+// ── Główna logika – WAŻNE: dodałem async tutaj
 window.addEventListener("load", async () => {
+  // Sprawdzamy czy już zweryfikowany
   if (isAlreadyVerified()) {
     document.getElementById("loginBtn").style.display = "none";
     document.getElementById("introText").innerHTML = "";
@@ -114,7 +115,7 @@ window.addEventListener("load", async () => {
     return;
   }
 
-  // Jeśli nie zweryfikowany – normalny flow
+  // Jeśli nie zweryfikowany – normalny flow OAuth
   const params = new URLSearchParams(location.search);
   const code = params.get("code");
   const state = params.get("state");
@@ -169,10 +170,10 @@ window.addEventListener("load", async () => {
 
     status.textContent = "Zapisywanie do arkusza...";
 
-    // 3. Generujemy klucz
-    const verifKey = crypto.randomUUID().replace(/-/g, ""); // prostszy klucz, 32 znaki
+    // 3. Generujemy klucz (prostsza wersja)
+    const verifKey = crypto.randomUUID().replace(/-/g, ""); // ~32 znaki
 
-    // 4. Najpierw sprawdzamy, czy użytkownik jest zbanowany
+    // 4. Sprawdzamy czy użytkownik jest zbanowany
     const checkBanBody = new URLSearchParams({
       action: "getAll",
       sheet: "discord"
@@ -184,13 +185,13 @@ window.addEventListener("load", async () => {
     let banData = [];
     try {
       banData = JSON.parse(banDataText);
-    } catch {
-      console.warn("Nie udało się sparsować danych z getAll");
+    } catch (e) {
+      console.warn("Błąd parsowania getAll:", e);
     }
 
     let isBanned = false;
     for (let row of banData) {
-      if (Array.isArray(row) && row[1] === user.id && row[7] === "BAN") {
+      if (Array.isArray(row) && row.length > 7 && row[1] === user.id && row[7] === "BAN") {
         isBanned = true;
         break;
       }
@@ -207,7 +208,7 @@ window.addEventListener("load", async () => {
     ];
 
     if (isBanned) {
-      // Logujemy próbę logowania po banie
+      // Log próby logowania po banie
       const banLogValues = JSON.stringify([
         new Date().toISOString(),
         user.id,
@@ -230,7 +231,7 @@ window.addEventListener("load", async () => {
       return;
     }
 
-    // Normalny zapis, jeśli nie zbanowany
+    // Normalny zapis
     const values = JSON.stringify(valuesArray);
 
     const resp = await fetch(WEB_APP_URL, {
@@ -243,9 +244,9 @@ window.addEventListener("load", async () => {
       })
     });
 
-    if (!resp.ok) throw new Error("Błąd appendRow: " + resp.status);
+    if (!resp.ok) throw new Error(`appendRow zwróciło ${resp.status}`);
 
-    // Ustawiamy cookie
+    // Cookie
     document.cookie = `${COOKIE_NAME}=${verifKey}; path=/; max-age=${7776000}; SameSite=Lax`;
 
     status.innerHTML = `Gotowe!<br>Zarejestrowano <strong>${username}${disc}</strong>`;
@@ -257,11 +258,12 @@ window.addEventListener("load", async () => {
     `;
     document.getElementById("keyDisplay").style.display = "block";
 
+    // Czyszczenie
     sessionStorage.clear();
     history.replaceState({}, document.title, location.pathname);
 
   } catch (err) {
-    status.textContent = "Błąd: " + (err.message || JSON.stringify(err));
+    status.textContent = "Błąd: " + (err.message || String(err));
     status.className = "error";
     console.error(err);
   }
