@@ -1,7 +1,56 @@
 // script.js – Kompletna wersja z hasłem w A2 i naprawionymi wykresami
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxcLeg8gbl2XSYfcC1L1-Py_KjVYvWVJrXzs88mgQi4JX-079bQR7OvyhRSktQPNnTF/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzc6pmNpf5OnyWbNtEcW_jLBA5GXQnmhFSJiLIUbOXhxfm-Ir6oocF9kQ3g7Tdi8rCBtw/exec";
+// ────────────────────────────────────────────────
+// discord weryfikacja
+const COOKIE_NAME    = "disc_verif_key";
+const VERIFICATION_PAGE = "https://pis-cord.github.io/weryfikacja/";
+// ────────────────────────────────────────────────
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+(async function checkVerification() {
+  const key = getCookie(COOKIE_NAME);
+
+  // Brak klucza → od razu na weryfikację
+  if (!key) {
+    window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
+    return;
+  }
+
+  // Jest klucz → sprawdzamy w arkuszu
+  try {
+    const res = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        action: "checkVerificationKey",
+        key: key
+      })
+    });
+
+    const data = await res.json();
+
+    if (!data.valid) {
+      // Klucz nieważny / nie istnieje → usuwamy ciasteczko i przekierowujemy
+      document.cookie = COOKIE_NAME + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+      window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
+    }
+
+    // Klucz jest ważny → strona ładuje się normalnie
+    console.log("Użytkownik zweryfikowany");
+
+  } catch (err) {
+    console.error("Błąd weryfikacji klucza:", err);
+    // W razie błędu – traktujemy jako niezweryfikowany (bezpieczniej)
+    window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
+  }
+})();
 // ────────────────────────────────────────────────
 // SYSTEM ADMINA PRZEZ KONSOLĘ (Hasło z A2)
 // ────────────────────────────────────────────────
