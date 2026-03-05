@@ -247,7 +247,7 @@ h3 {
 .w14:hover,
 .w15:hover,
 .w16:hover {
-  box-shadow: 0 0 15 black;
+  transform: scale(2);
 }
 
 .woj-img {
