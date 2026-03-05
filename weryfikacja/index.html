@@ -256,6 +256,8 @@ window.addEventListener("load", async () => {
 
     const values = JSON.stringify(valuesArray);
 
+try {
+    // zapis do arkusza
     const resp = await fetch(WEB_APP_URL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -265,18 +267,17 @@ window.addEventListener("load", async () => {
         sheet: "discord"
       })
     });
-
     if (!resp.ok) throw new Error("Błąd appendRow: " + resp.status);
 
-try {
+    // ustawienie cookie i redirect
     document.cookie = `${COOKIE_NAME}=${encodeURIComponent(verifKey)}; path=/; max-age=${7776000}; SameSite=Lax`;
     status.innerHTML = `Gotowe!<br>Zweryfikowano <strong>${username}${disc}</strong>`;
 
     const returnParams = new URLSearchParams(location.search);
     let returnUrl = returnParams.get("return");
 
+    // redirect – w środku setTimeout bez try/catch
     setTimeout(() => {
-        // redirect – już bez catch
         if (returnUrl && returnUrl.startsWith(window.location.origin)) {
             const separator = returnUrl.includes("?") ? "&" : "?";
             returnUrl += separator + "verified=1&discordId=" + encodeURIComponent(user.id);
@@ -287,13 +288,12 @@ try {
     }, 50);
 
 } catch (err) {
-    console.error("Błąd przy ustawianiu cookie lub redirect:", err);
+    console.error("Błąd przy weryfikacji:", err);
     status.innerHTML = "Błąd weryfikacji, spróbuj ponownie.";
-}
-
-} catch (err) {
-    console.error("Błąd przy ustawianiu cookie lub URL:", err);
-    status.innerHTML = "Błąd weryfikacji, spróbuj ponownie.";
+} finally {
+    // sprzątanie
+    sessionStorage.clear();
+    history.replaceState({}, document.title, location.pathname);
 }
     const returnParams = new URLSearchParams(location.search);
     let returnUrl = returnParams.get("return");
