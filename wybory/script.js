@@ -141,12 +141,10 @@ async function vote(candidate) {
 function sprawdzGodzine() {
     const teraz = new Date();
 
-    // godzina od której ma się pokazać
-    const godzinaStart = 20; 
-    const minutaStart = 45;
+    // rok, miesiąc (0-11!), dzień, godzina, minuta
+    const start = new Date(2026, 2, 5, 21, 10); 
 
-    if (teraz.getHours() > godzinaStart || 
-       (teraz.getHours() === godzinaStart && teraz.getMinutes() >= minutaStart)) {
+    if (teraz >= start) {
 
         const sections = ["wykresy", "mapWojProste"];
         const containers = document.querySelectorAll(".woj-img-container");
@@ -312,33 +310,33 @@ window.toggleChart = function(typ) {
 };
 
 async function odswiezKoloryWojewodztw() {
-  const wojStats = {};
-  const CHUNK = 50;
-  let r = 2;
-  let maDane = true;
-  while (maDane) {
-    const promises = [];
-    for (let i = 0; i < CHUNK; i++) {
-      promises.push(Promise.all([
-        getCell(`C${r + i}`, "glosy"),  // ← kolumna C = województwo
-        getCell(`D${r + i}`, "glosy")   // ← kolumna D = kandydat
-      ]));
-    }
-    const wyniki = await Promise.all(promises);
-    maDane = false;
-    for (const [wojRaw, kand] of wyniki) {
-      const woj = (wojRaw || "").trim();
-      if (!kand || !woj) continue;
-      maDane = true;
-      const wojKey = woj.toLowerCase();
-      if (!wojStats[wojKey]) wojStats[wojKey] = { total: 0, votes: {} };
-      wojStats[wojKey].total++;
-      wojStats[wojKey].votes[kand] = (wojStats[wojKey].votes[kand] || 0) + 1;
-    }
-    r += CHUNK;
-    if (r > 5000) break;
-  }
-  const wszystkieKontenery = document.querySelectorAll('.woj-img-container');
+  const wojStats = {};
+  const CHUNK = 50;
+  let r = 2;
+  let maDane = true;
+  while (maDane) {
+    const promises = [];
+    for (let i = 0; i < CHUNK; i++) {
+      promises.push(Promise.all([
+        getCell(E${r + i}, "Arkusz1"),
+        getCell(F${r + i}, "Arkusz1")
+      ]));
+    }
+    const wyniki = await Promise.all(promises);
+    maDane = false;
+    for (const [wojRaw, kand] of wyniki) {
+      const woj = (wojRaw || "").trim();
+      if (!kand || !woj) continue;
+      maDane = true;
+      const wojKey = woj.toLowerCase();
+      if (!wojStats[wojKey]) wojStats[wojKey] = { total: 0, votes: {} };
+      wojStats[wojKey].total++;
+      wojStats[wojKey].votes[kand] = (wojStats[wojKey].votes[kand] || 0) + 1;
+    }
+    r += CHUNK;
+    if (r > 5000) break;
+  }
+  const wszystkieKontenery = document.querySelectorAll('.woj-img-container');
   wszystkieKontenery.forEach(container => {
     const img = container.querySelector('.woj-img');
     const overlay = container.querySelector('.woj-overlay');
@@ -377,8 +375,6 @@ async function odswiezKoloryWojewodztw() {
     overlay.style.opacity = 0.4 + (procent / 100) * 0.5; // 40% → 90% opacity
     tooltip.textContent = ${wojName} ${candidates[dominujacy]?.name || 'brak'} (${procent.toFixed(1)}%) Głosy: ${stats.total}.trim();
   });
-}
-}
 // Dodaj wywołanie przy starcie i po głosie
 window.addEventListener('load', () => {
   odswiezWykresy();
