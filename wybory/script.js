@@ -40,10 +40,11 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
   if (code) return;
 
   const key = getCookie(COOKIE_NAME);
+  const verifiedFlag = sessionStorage.getItem("discVerified");
 
-  if (!key || key.length < MIN_KEY_LEN) {
-    window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
-    return;
+  if ((!key || key.length < MIN_KEY_LEN) && !verifiedFlag) {
+      window.location.replace(VERIFICATION_PAGE + "?return=" + encodeURIComponent(window.location.href));
+      return;
   }
 
   try {
