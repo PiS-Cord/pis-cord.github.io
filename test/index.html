@@ -5,59 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Weryfikacja Discord → Arkusz + klucz</title>
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #0f0f23;
-      color: #d0d0ff;
-      margin: 0;
-      padding: 40px 20px;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .card {
-      background: #1a1a3a;
-      padding: 2.5rem 3rem;
-      border-radius: 12px;
-      max-width: 520px;
-      text-align: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.7);
-    }
+    body { font-family: system-ui, sans-serif; background: #0f0f23; color: #d0d0ff; margin: 0; padding: 40px 20px; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+    .card { background: #1a1a3a; padding: 2.5rem 3rem; border-radius: 12px; max-width: 520px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.7); }
     h1 { color: #7289da; margin-bottom: 1.2rem; }
     p { color: #a0b0e0; line-height: 1.5; margin-bottom: 2rem; }
-    button {
-      background: #5865f2;
-      color: white;
-      border: none;
-      padding: 14px 40px;
-      font-size: 1.1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-    }
+    button { background: #5865f2; color: white; border: none; padding: 14px 40px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 12px; }
     button:hover { background: #4752c4; }
-    #status {
-      margin-top: 2rem;
-      font-weight: 500;
-      min-height: 2.2em;
-    }
+    #status { margin-top: 2rem; font-weight: 500; min-height: 2.2em; }
     .loading { color: #ffcc00; }
     .success { color: #43b581; }
     .banned { color: #ff5555; font-weight: bold; }
     .already { color: #00cc99; font-size: 1.3rem; margin: 1.5rem 0; }
-    .key-box {
-      margin-top: 1.8rem;
-      padding: 1.2rem;
-      background: #0d1b2a;
-      border-radius: 8px;
-      word-break: break-all;
-      font-family: monospace;
-      font-size: 1.1rem;
-      border: 1px solid #5865f2;
-    }
+    .key-box { margin-top: 1.8rem; padding: 1.2rem; background: #0d1b2a; border-radius: 8px; word-break: break-all; font-family: monospace; font-size: 1.1rem; border: 1px solid #5865f2; }
   </style>
 </head>
 <body>
@@ -93,7 +52,7 @@ authUrl.searchParams.set("redirect_uri", REDIRECT_URI);
 authUrl.searchParams.set("response_type", "code");
 authUrl.searchParams.set("scope", SCOPE);
 
-// ── Funkcja sprawdzająca cookie przy starcie ──────────────────────
+// ── Funkcja sprawdzająca cookie ──────────────────────
 function isAlreadyVerified() {
   const cookies = document.cookie.split('; ');
   const keyCookie = cookies.find(row => row.startsWith(COOKIE_NAME + '='));
@@ -102,41 +61,70 @@ function isAlreadyVerified() {
   return key && key.length >= MIN_KEY_LEN;
 }
 
-// ── Główna logika – WAŻNE: dodałem async tutaj
+// ── Podpinamy przycisk od razu (na wszelki wypadek) ──────────────
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("loginBtn");
+  if (btn) {
+    btn.onclick = async () => {
+      const status = document.getElementById("status");
+      status.textContent = "Generuję PKCE...";
+      status.className = "loading";
+
+      try {
+        const rand = crypto.getRandomValues(new Uint8Array(32));
+        const verifier = btoa(String.fromCharCode(...rand)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+        const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+        const challenge = btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+        sessionStorage.setItem("pkce_verifier", verifier);
+
+        const state = crypto.randomUUID();
+        sessionStorage.setItem("oauth_state", state);
+
+        authUrl.searchParams.set("state", state);
+        authUrl.searchParams.set("code_challenge", challenge);
+        authUrl.searchParams.set("code_challenge_method", "S256");
+
+        window.location.href = authUrl.toString();
+      } catch (err) {
+        status.textContent = "Błąd startu: " + err.message;
+        status.className = "error";
+      }
+    };
+  }
+});
+
+// ── Główna logika po załadowaniu (całość async) ───────────────────
 window.addEventListener("load", async () => {
-  // Sprawdzamy czy już zweryfikowany
+  const status = document.getElementById("status");
+
+  // Sprawdzamy cookie
   if (isAlreadyVerified()) {
     document.getElementById("loginBtn").style.display = "none";
     document.getElementById("introText").innerHTML = "";
-    document.getElementById("status").innerHTML =
-      '<div class="already">Jesteś już zweryfikowany ✓</div>' +
-      '<small>Możesz zamknąć tę stronę lub przejść dalej.</small>';
+    status.innerHTML = '<div class="already">Jesteś już zweryfikowany ✓</div><small>Możesz zamknąć tę stronę lub przejść dalej.</small>';
     document.getElementById("keyDisplay").style.display = "none";
     return;
   }
 
-  // Jeśli nie zweryfikowany – normalny flow OAuth
   const params = new URLSearchParams(location.search);
   const code = params.get("code");
-  const state = params.get("state");
-
   if (!code) return;
 
+  const state = params.get("state");
   const savedState = sessionStorage.getItem("oauth_state");
   if (state !== savedState) {
-    document.getElementById("status").textContent = "Błąd: state mismatch";
-    document.getElementById("status").className = "error";
+    status.textContent = "Błąd: state mismatch";
+    status.className = "error";
     return;
   }
 
   const verifier = sessionStorage.getItem("pkce_verifier");
   if (!verifier) return;
 
-  const status = document.getElementById("status");
   status.textContent = "Wymiana kodu na token...";
 
   try {
-    // 1. Wymiana code → token (PKCE)
     const tokenBody = new URLSearchParams({
       client_id: CLIENT_ID,
       grant_type: "authorization_code",
@@ -155,7 +143,6 @@ window.addEventListener("load", async () => {
 
     const { access_token } = await tokenRes.json();
 
-    // 2. Dane użytkownika
     const userRes = await fetch("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${access_token}` }
     });
@@ -170,45 +157,25 @@ window.addEventListener("load", async () => {
 
     status.textContent = "Zapisywanie do arkusza...";
 
-    // 3. Generujemy klucz (prostsza wersja)
-    const verifKey = crypto.randomUUID().replace(/-/g, ""); // ~32 znaki
+    const verifKey = crypto.randomUUID().replace(/-/g, "");
 
-    // 4. Sprawdzamy czy użytkownik jest zbanowany
-    const checkBanBody = new URLSearchParams({
-      action: "getAll",
-      sheet: "discord"
-    });
-
-    const banCheckRes = await fetch(WEB_APP_URL + "?" + checkBanBody.toString());
+    // Sprawdzamy bana
+    const checkBanBody = new URLSearchParams({ action: "getAll", sheet: "discord" });
+    const banCheckRes = await fetch(WEB_APP_URL + "?" + checkBanBody);
     const banDataText = await banCheckRes.text();
 
     let banData = [];
-    try {
-      banData = JSON.parse(banDataText);
-    } catch (e) {
-      console.warn("Błąd parsowania getAll:", e);
-    }
+    try { banData = JSON.parse(banDataText); } catch {}
 
     let isBanned = false;
     for (let row of banData) {
-      if (Array.isArray(row) && row.length > 7 && row[1] === user.id && row[7] === "BAN") {
+      if (Array.isArray(row) && row[1] === user.id && row[7] === "BAN") {
         isBanned = true;
         break;
       }
     }
 
-    let valuesArray = [
-      new Date().toISOString(),
-      user.id,
-      username,
-      user.global_name || "",
-      user.discriminator || "0",
-      avatarUrl,
-      verifKey
-    ];
-
     if (isBanned) {
-      // Log próby logowania po banie
       const banLogValues = JSON.stringify([
         new Date().toISOString(),
         user.id,
@@ -232,6 +199,16 @@ window.addEventListener("load", async () => {
     }
 
     // Normalny zapis
+    const valuesArray = [
+      new Date().toISOString(),
+      user.id,
+      username,
+      user.global_name || "",
+      user.discriminator || "0",
+      avatarUrl,
+      verifKey
+    ];
+
     const values = JSON.stringify(valuesArray);
 
     const resp = await fetch(WEB_APP_URL, {
@@ -244,9 +221,8 @@ window.addEventListener("load", async () => {
       })
     });
 
-    if (!resp.ok) throw new Error(`appendRow zwróciło ${resp.status}`);
+    if (!resp.ok) throw new Error("Błąd appendRow");
 
-    // Cookie
     document.cookie = `${COOKIE_NAME}=${verifKey}; path=/; max-age=${7776000}; SameSite=Lax`;
 
     status.innerHTML = `Gotowe!<br>Zarejestrowano <strong>${username}${disc}</strong>`;
@@ -258,12 +234,11 @@ window.addEventListener("load", async () => {
     `;
     document.getElementById("keyDisplay").style.display = "block";
 
-    // Czyszczenie
     sessionStorage.clear();
     history.replaceState({}, document.title, location.pathname);
 
   } catch (err) {
-    status.textContent = "Błąd: " + (err.message || String(err));
+    status.textContent = "Błąd: " + (err.message || err);
     status.className = "error";
     console.error(err);
   }
