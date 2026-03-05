@@ -247,7 +247,8 @@ h3 {
 .w14:hover,
 .w15:hover,
 .w16:hover {
-  transform: scale(2);
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
 }
 
 .woj-img {
