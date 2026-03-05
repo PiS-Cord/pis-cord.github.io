@@ -17,7 +17,6 @@
     <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
-
 <nav class="navbar">
     <div class="nav-container">
         <div class="brand-wrapper">
@@ -32,9 +31,9 @@
 <header class="hero">
     <div class="container">
         <h1 class="mega-title">PLEBISCYT NA<br><span class="text-red">NAJLEPSZEGO</span><br>KANDYDATA NA PREMIERA PiS.</h1>
-        <p class="hero-sub">Wypełnij dane i wybierz swojego faworyta z listy poniżej.</p>    
+        <p class="hero-sub">Zweryfikuj się Discordem i oddaj głos – tylko jeden na konto.</p>
         <div class="hero-btns" style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 35px;">
-            <input id="nick" placeholder="Nick Discord" class="input-modern">
+            <input id="nick" placeholder="Nick Discord (automatyczny po weryfikacji)" class="input-modern" readonly>
             <select id="wojewodztwo" class="select-modern">
                 <option value="" disabled selected>Wybierz województwo</option>
                 <option value="dolnośląskie">Dolnośląskie</option>
@@ -62,6 +61,7 @@
     <div class="container">
         <h2 class="section-title">LISTA KANDYDATÓW</h2>
         <div id="candidates" style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;"></div>
+    </div>
 </section>
 
 <section id = "wykresy" class="features ukryte" style="padding-top: 0;">
