@@ -160,21 +160,34 @@ window.addEventListener("load", async () => {
     const verifKey = crypto.randomUUID().replace(/-/g, "");
 
     // Sprawdzamy bana
-    const checkBanBody = new URLSearchParams({ action: "getAll", sheet: "discord" });
-    const banCheckRes = await fetch(WEB_APP_URL + "?" + checkBanBody);
+    const checkBanBody = new URLSearchParams({
+      action: "getAll",
+      sheet: "discord"
+    });
+    
+    const banCheckRes = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: checkBanBody
+    });
+    
     const banDataText = await banCheckRes.text();
-
+    
     let banData = [];
-    try { banData = JSON.parse(banDataText); } catch {}
-
+    try {
+      const parsed = JSON.parse(banDataText);
+      banData = parsed.data || parsed;  // jeśli opakowałeś w {success: true, data: [...]}
+    } catch (e) {
+      console.warn("Błąd parsowania getAll:", e);
+    }
+    
     let isBanned = false;
     for (let row of banData) {
-      if (Array.isArray(row) && row[1] === user.id && row[7] === "BAN") {
+      if (Array.isArray(row) && row.length > 7 && row[1] === user.id && row[7] === "BAN") {
         isBanned = true;
         break;
       }
     }
-
     if (isBanned) {
       const banLogValues = JSON.stringify([
         new Date().toISOString(),
