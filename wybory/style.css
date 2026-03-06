@@ -372,13 +372,14 @@ body {
 
 /* INPUTY */
 .input-modern, .select-modern {
+    transform: translate(300px, 0px);
     background: #111;
     border: 1px solid #333;
     padding: 15px 20px;
     color: white;
     border-radius: 6px;
     font-size: 0.9rem;
-    min-width: 220px;
+    min-width: 550px;
     transition: 0.3s;
 }
 #output {
