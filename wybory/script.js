@@ -28,7 +28,7 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
   sessionStorage.setItem("verifiedDiscordId", discordIdFromUrl);
 
   // Pokazujemy nick z Discorda
-  document.getElementById("nick").value = "Zweryfikowany użytkownik (Discord)";
+  document.getElementById("nick").value = "Trwa Weryfikacja...";
   document.getElementById("nick").readOnly = true;
 }
 (async function checkVerificationAndLoadUser() {
@@ -67,8 +67,8 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
 
     // Zweryfikowany → pobieramy dane użytkownika z klucza (opcjonalnie – można dodać akcję w Apps Script)
     // Na razie tylko pokazujemy komunikat
-    document.getElementById("nick").value = "Zweryfikowany użytkownik";
-    document.getElementById("nick").placeholder = "Zweryfikowany przez Discord";
+    document.getElementById("nick").value = "Użytkownik zweryfikowany.";
+    document.getElementById("nick").placeholder = "Możesz oddać głos.";
 
   } catch (err) {
     console.error("Błąd weryfikacji:", err);
