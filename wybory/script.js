@@ -69,7 +69,7 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
     // Na razie tylko pokazujemy komunikat
     document.getElementById("nick").value = "Użytkownik zweryfikowany.";
     document.getElementById("nick").placeholder = "Możesz oddać głos.";
-    if sprawdzGodzine2() {
+    if (sprawdzGodzine2() == 1) {
       document.getElementById("nick").value = "Głosowanie niedostępne.";
       document.getElementById("nick").placeholder = "Głosowanie niedostępne.";
     }
@@ -182,7 +182,7 @@ function sprawdzGodzine2() {
     if (teraz2 >= start2) {
       const kandydaci = document.querySelectorAll(".kandydaci");
       const nickver = document.getElementById("nick");
-      if (nickver.placeholder = "Możesz oddać głos.") { 
+      if (nickver.placeholder == "Możesz oddać głos.") { 
         kandydaci.classList.remove("ukryte");
         kandydaci.classList.add("pokaz");
       }
