@@ -39,17 +39,16 @@ function closeEasterEgg() {
     }
 }
 
-// Obsługa wpisywania hasła na klawiaturze
+// Obsługa klawiatury
 document.addEventListener("keydown", function(e) {
     typed += e.key.toLowerCase();
-
-    // Zachowaj tylko tyle znaków, ile ma tajne hasło
     if (typed.length > secretSequence.length) {
         typed = typed.slice(-secretSequence.length);
     }
 
     if (typed === secretSequence) {
-        openEasterEgg("batyr.mp4");
-        typed = ""; // Resetuj po aktywacji
+        // Dodano ../ aby wyjść do głównego folderu po batyra
+        openEasterEgg("../batyr.mp4");
+        typed = ""; 
     }
 });
