@@ -13,6 +13,12 @@
 .pokaz {
     visibility: visible;
 }
+.kandydaci {
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 15px; 
+  justify-content: center;
+}
 h3 {
     margin-top: 50px;
     margin-bottom: 50px;
