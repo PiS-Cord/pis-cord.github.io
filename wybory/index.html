@@ -193,7 +193,16 @@
     </div>
 </footer>
 
-
+    <div id="video-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="width: 90%; max-width: 800px; text-align: center;">
+            <video id="easter-video-player" width="100%" height="auto" controls style="border-radius: 10px; box-shadow: 0 0 30px var(--glow-red);">
+                Twoja przeglądarka nie obsługuje wideo.
+            </video>
+            <br>
+            <button onclick="closeEasterEgg()" style="margin-top: 20px; padding: 15px 30px; background: var(--pis-red); color: white; border: none; cursor: pointer; font-family: 'Archivo Black'; border-radius: 5px;">ZAMKNIJ</button>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
     <script src="../easter-eggi.js"></script>
     
