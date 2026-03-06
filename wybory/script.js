@@ -69,6 +69,10 @@ if (isVerifiedFromUrl && discordIdFromUrl) {
     // Na razie tylko pokazujemy komunikat
     document.getElementById("nick").value = "Użytkownik zweryfikowany.";
     document.getElementById("nick").placeholder = "Możesz oddać głos.";
+    if sprawdzGodzine2() {
+      document.getElementById("nick").value = "Głosowanie niedostępne.";
+      document.getElementById("nick").placeholder = "Głosowanie niedostępne.";
+    }
 
   } catch (err) {
     console.error("Błąd weryfikacji:", err);
@@ -166,6 +170,26 @@ function sprawdzGodzine() {
 
         odswiezWykresy();
         odswiezKoloryWojewodztw();
+    }
+}
+// OTWARCIE ANKIETY
+function sprawdzGodzine2() {
+    const teraz2 = new Date();
+
+    // rok, miesiąc (0-11!), dzień, godzina, minuta
+    const start2 = new Date(2026, 2, 6, 16, 0); 
+
+    if (teraz2 >= start2) {
+      const kandydaci = document.querySelectorAll(".kandydaci");
+      const nickver = document.getElementById("nick");
+      if (nickver.placeholder = "Możesz oddać głos.") { 
+        kandydaci.classList.remove("ukryte");
+        kandydaci.classList.add("pokaz");
+      }
+      return 1;
+    }
+    else {
+      return 0;
     }
 }
 // ────────────────────────────────────────────────
