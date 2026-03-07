@@ -421,5 +421,7 @@ window.addEventListener('load', () => {
   odswiezWykresy();
   odswiezKoloryWojewodztw();
   setInterval(sprawdzGodzine, 60000); // sprawdza co minutę
+  setInterval(sprawdzGodzine2, 60000); // sprawdza co minutę
 });
 window.addEventListener("load", sprawdzGodzine);
+window.addEventListener("load", sprawdzGodzine2);
