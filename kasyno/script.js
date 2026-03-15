@@ -1,39 +1,40 @@
-
 // =======================
-// EASTER EGGI
+// WERYFIKACJA I ZAPISYWANIE NICKU
 // =======================
-let clickCount = 0;
-function playEasterEgg() {
-    clickCount++;
-    if (clickCount === 5) { openEasterEgg("film.mp4"); clickCount = 0; }
-    setTimeout(() => { clickCount = 0; }, 2000);
-}
 
-function openEasterEgg(videoFile) {
-    const overlay = document.getElementById("video-overlay");
-    const video = document.getElementById("easter-video-player");
-    if(overlay && video) { video.src = videoFile; overlay.style.display = "flex"; video.play(); }
-}
+function saveIdentity() {
+    const nickInput = document.getElementById("user-nick");
+    const statusMsg = document.getElementById("status-msg");
+    const nick = nickInput.value.trim();
 
-function closeEasterEgg() {
-    const overlay = document.getElementById("video-overlay");
-    const video = document.getElementById("easter-video-player");
-    if(overlay && video) { video.pause(); video.src = ""; overlay.style.display = "none"; }
-
-}
-const secretSequence = "batyr";
-let typed = "";
-
-document.addEventListener("keydown", function(e) {
-    typed += e.key.toLowerCase();
-
-    if (typed.length > secretSequence.length) {
-        typed = typed.slice(-secretSequence.length);
+    if (nick === "") {
+        statusMsg.style.display = "block";
+        statusMsg.innerText = "Podaj swój nick z Discorda!";
+        statusMsg.style.color = "var(--pis-red)";
+        return;
     }
 
-    if (typed === secretSequence) {
-        openEasterEgg("batyr.mp4");
-        typed = "";
+    // Zapisujemy nick w pamięci przeglądarki
+    localStorage.setItem("discordNick", nick);
+
+    // Przechodzimy do strony kasyna
+    enterGame(nick);
+}
+
+function enterGame(nick) {
+    document.getElementById("display-nick").innerText = nick;
+    document.getElementById("step-1").style.display = "none";
+    document.getElementById("step-2").style.display = "block";
+    
+    // Po wejściu od razu sprawdzamy, czy ten nick ma cooldown na losowanie
+    checkCooldown();
+}
+
+// Sprawdzanie przy starcie strony, czy użytkownik jest już "zalogowany"
+document.addEventListener("DOMContentLoaded", () => {
+    const savedNick = localStorage.getItem("discordNick");
+    if (savedNick) {
+        enterGame(savedNick);
     }
 });
 
@@ -149,5 +150,6 @@ function sendToDiscord(nick, wynik) {
 spinBtn.addEventListener("click", spin);
 drawWheel();
 checkCooldown();
+
 
 
